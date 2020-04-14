@@ -1,57 +1,69 @@
 window.onload = main;
 
 function main() {
-    var width = 700,
-        height = 500;
+    var width = window.innerWidth * 0.65,
+        height = window.innerHeight;
 
-    var svg = d3
-        .select("body")
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
+    var svg = d3.select("svg");
 
     var projection = d3
         .geoMercator()
-        // .center([122, 24])
-        .center([121, 24]) // 中心點(經緯度)
-        .scale(6000) // 放大倍率
-        .translate([width / 2, height / 2.5]) // 置中
+        .center([121.5654, 25.085]) // 中心點(經緯度)
+        .scale(width * 150) // 放大倍率
+        .translate([width / 2, height / 2]) // 置中
         .precision(0.1);
     var path = d3.geoPath().projection(projection);
 
+    const zoom = d3.zoom().scaleExtent([0.8, 10]).on("zoom", zoomed);
+    svg.call(zoom);
+
     d3.json("data/TOWN_MOI_1090324.json").then((taiwan) => {
-        // Draw Counties
+        taiwan.features = topojson
+            .feature(taiwan, taiwan.objects.TOWN_MOI_1090324)
+            .features.filter(function (data) {
+                // console.log(data.properties.COUNTYNAME);
+                return data.properties.COUNTYNAME == "臺北市";
+            });
+
+        // Draw Towns
         svg.selectAll("path")
             .data(
-                topojson.feature(taiwan, taiwan.objects.TOWN_MOI_1090324)
-                    .features
+                // topojson.feature(taiwan, taiwan.objects.TOWN_MOI_1090324)
+                //     .features
+                taiwan.features
             )
             .enter()
             .append("path")
-            .attr("class", "county")
+            .attr("class", "town")
             .attr("d", path)
             .attr("id", (data) => {
                 return "city" + data.properties.TOWNID;
             })
             .on("click", (data) => {
-                document.querySelector(".title").innerHTML =
+                document.querySelector(".info .content").innerHTML =
                     data.properties.TOWNNAME;
             });
 
         // Draw Boundary
         svg.append("path")
-            .attr(
-                "d",
-                path(
-                    topojson.mesh(
-                        taiwan,
-                        taiwan.objects.TOWN_MOI_1090324,
-                        function (a, b) {
-                            return a !== b;
-                        }
-                    )
+            .datum(
+                topojson.mesh(
+                    taiwan,
+                    taiwan.objects.TOWN_MOI_1090324,
+                    function (a, b) {
+                        return (
+                            a.properties.COUNTYNAME == "臺北市" ||
+                            b.properties.COUNTYNAME == "臺北市"
+                        );
+                    }
                 )
             )
+            .attr("d", path)
             .attr("class", "boundary");
     });
+
+    function zoomed() {
+        svg.selectAll("path") // To prevent stroke width from scaling
+            .attr("transform", d3.event.transform);
+    }
 }

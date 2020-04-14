@@ -1,27 +1,41 @@
+body {
+    margin: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+}
+
 svg {
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
+    width: 65vw;
+    height: 100vh;
+    background-color: #77d8d8;
 }
 
-.graticule {
-    fill: none;
-    stroke: #777;
-    stroke-width: 0.5px;
-    stroke-opacity: 0.5;
+.info {
+    width: 35vw;
+    height: 100vh;
+    background-color: #ddd;
 }
 
-.county {
-    fill: #999;
+.info > .title {
+    text-align: center;
+    font-size: 2em;
+    margin: 0.5em;
+}
+
+.town {
+    fill: #639a67;
     cursor: pointer;
 }
 
-.county:hover {
-    fill: #555;
+.town:hover {
+    fill: #666;
 }
 
 .boundary {
     fill: none;
-    stroke: #fff;
-    stroke-width: 0.5px;
+    stroke: #fffd;
+    stroke-width: 0.01em;
 }
