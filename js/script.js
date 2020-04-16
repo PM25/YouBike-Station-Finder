@@ -14,22 +14,27 @@ function main() {
         .precision(0.1);
     var path = d3.geoPath().projection(projection);
 
-    const zoom = d3.zoom().scaleExtent([0.8, 10]).on("zoom", zoomed);
+    const zoom = d3.zoom().scaleExtent([0.6, 10]).on("zoom", zoomed);
     svg.call(zoom);
 
-    // d3.json("data/2020-04-11_21-29-13.json").then((data) => {
-    //     console.log(data);
-    // });
+    function zoomed() {
+        svg.selectAll("path") // To prevent stroke width from scaling
+            .attr("transform", d3.event.transform);
+    }
 
-    d3.json("data/TOWN_MOI_1090324.json").then((taiwan) => {
-        taipei = topojson
+    var files = ["data/TOWN_MOI_1090324.json", "data/2020-04-11_21-29-13.json"];
+
+    Promise.all(files.map((url) => d3.json(url))).then(function (values) {
+        taiwan = values[0];
+
+        taipei_features = topojson
             .feature(taiwan, taiwan.objects.TOWN_MOI_1090324)
             .features.filter(function (data) {
                 // console.log(data.properties.COUNTYNAME);
                 return data.properties.COUNTYNAME == "臺北市";
             });
 
-        non_taipei = topojson
+        non_taipei_features = topojson
             .feature(taiwan, taiwan.objects.TOWN_MOI_1090324)
             .features.filter(function (data) {
                 // console.log(data.properties.COUNTYNAME);
@@ -38,7 +43,7 @@ function main() {
 
         // Draw Taipei City
         svg.selectAll("path")
-            .data(taipei)
+            .data(taipei_features)
             .enter()
             .append("path")
             .attr("class", "taipei")
@@ -53,7 +58,7 @@ function main() {
 
         // Draw Towns that is not Taipei
         svg.selectAll("path")
-            .data(non_taipei)
+            .data(non_taipei_features)
             .enter()
             .append("path")
             .attr("class", "non-taipei")
@@ -75,10 +80,36 @@ function main() {
             )
             .attr("d", path)
             .attr("class", "boundary");
-    });
 
-    function zoomed() {
-        svg.selectAll("path") // To prevent stroke width from scaling
-            .attr("transform", d3.event.transform);
-    }
+            
+        // Load Data
+        data = values[1];
+
+        function sumup(arr, key) {
+            total = 0;
+            for (var i = 0; i < arr.length; ++i) {
+                total += parseInt(arr[i][key]);
+            }
+            return total;
+        }
+
+        var area_data = {};
+
+        for (let key in data) {
+            area = data[key]["sarea"];
+            if (area in area_data) {
+                area_data[area].push(data[key]);
+            } else {
+                area_data[area] = [];
+            }
+        }
+
+        for (let key in area_data) {
+            area_data[key]["total"] = {};
+            area_data[key]["total"]["tot"] = sumup(area_data[key], "tot");
+            area_data[key]["total"]["sbi"] = sumup(area_data[key], "sbi");
+            area_data[key]["total"]["bemp"] = sumup(area_data[key], "bemp");
+        }
+        console.log(area_data);
+    });
 }
