@@ -22,9 +22,45 @@ function main() {
             .attr("transform", d3.event.transform);
     }
 
+    // Data and color scale
+    var colorScale = d3
+        .scaleThreshold()
+        .domain([100, 200, 400, 700, 1000, 1500, 2000])
+        .range(d3.schemeBlues[7]);
+
     var files = ["data/TOWN_MOI_1090324.json", "data/2020-04-11_21-29-13.json"];
 
     Promise.all(files.map((url) => d3.json(url))).then(function (values) {
+        // Load Data
+        ubike_data = values[1];
+
+        function sumup(arr, key) {
+            total = 0;
+            for (var i = 0; i < arr.length; ++i) {
+                total += parseInt(arr[i][key]);
+            }
+            return total;
+        }
+
+        var area_data = {};
+
+        for (let key in ubike_data) {
+            area = ubike_data[key]["sarea"];
+            if (area in area_data) {
+                area_data[area].push(ubike_data[key]);
+            } else {
+                area_data[area] = [];
+            }
+        }
+
+        for (let key in area_data) {
+            area_data[key]["total"] = {};
+            area_data[key]["total"]["tot"] = sumup(area_data[key], "tot");
+            area_data[key]["total"]["sbi"] = sumup(area_data[key], "sbi");
+            area_data[key]["total"]["bemp"] = sumup(area_data[key], "bemp");
+        }
+
+        // Draw Map
         taiwan = values[0];
 
         taipei_features = topojson
@@ -48,6 +84,16 @@ function main() {
             .append("path")
             .attr("class", "taipei")
             .attr("d", path)
+            .attr("fill", function (data) {
+                // data.total = area_data.get(data.TOWNNAME) || 0;
+                console.log(
+                    data.properties.TOWNNAME,
+                    area_data[data.properties.TOWNNAME]["total"]["bemp"]
+                );
+                return colorScale(
+                    area_data[data.properties.TOWNNAME]["total"]["bemp"]
+                );
+            })
             .attr("id", (data) => {
                 return "city" + data.properties.TOWNID;
             })
@@ -80,36 +126,5 @@ function main() {
             )
             .attr("d", path)
             .attr("class", "boundary");
-
-            
-        // Load Data
-        data = values[1];
-
-        function sumup(arr, key) {
-            total = 0;
-            for (var i = 0; i < arr.length; ++i) {
-                total += parseInt(arr[i][key]);
-            }
-            return total;
-        }
-
-        var area_data = {};
-
-        for (let key in data) {
-            area = data[key]["sarea"];
-            if (area in area_data) {
-                area_data[area].push(data[key]);
-            } else {
-                area_data[area] = [];
-            }
-        }
-
-        for (let key in area_data) {
-            area_data[key]["total"] = {};
-            area_data[key]["total"]["tot"] = sumup(area_data[key], "tot");
-            area_data[key]["total"]["sbi"] = sumup(area_data[key], "sbi");
-            area_data[key]["total"]["bemp"] = sumup(area_data[key], "bemp");
-        }
-        console.log(area_data);
     });
 }

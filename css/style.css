@@ -30,10 +30,10 @@ svg {
     margin: 0.5em;
 }
 
-.taipei {
+/* .taipei {
     fill: #639a67;
     cursor: pointer;
-}
+} */
 
 .taipei:hover {
     fill: #666;
