@@ -1,5 +1,6 @@
 body {
     margin: 0;
+    background-color: #77d8d8;
 }
 
 .container {
@@ -8,15 +9,19 @@ body {
 }
 
 svg {
-    width: 65vw;
+    width: 100vw;
     height: 100vh;
-    background-color: #77d8d8;
 }
 
 .info {
+    position: fixed;
+    right: 0;
+    top: 0;
     width: 35vw;
-    height: 100vh;
-    background-color: #ddd;
+    height: 90vh;
+    background-color: #dddd;
+    border-radius: 2em;
+    margin: 1em;
 }
 
 .info > .title {
@@ -25,13 +30,17 @@ svg {
     margin: 0.5em;
 }
 
-.town {
+.taipei {
     fill: #639a67;
     cursor: pointer;
 }
 
-.town:hover {
+.taipei:hover {
     fill: #666;
+}
+
+.non-taipei {
+    fill: #639a6755;
 }
 
 .boundary {
