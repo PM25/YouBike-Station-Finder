@@ -97,13 +97,13 @@ function main() {
             .attr("id", (data) => {
                 return "city" + data.properties.TOWNID;
             })
-            .on("click", (data) => {
+            .on("mouseover", (data) => {
                 document.querySelector(".info .content").innerHTML =
                     data.properties.TOWNNAME;
             });
 
         // Draw Towns that is not Taipei
-        svg.selectAll("path")
+        svg.selectAll("path.non-taipei")
             .data(non_taipei_features)
             .enter()
             .append("path")

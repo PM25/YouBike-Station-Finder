@@ -19,7 +19,7 @@ svg {
     top: 0;
     width: 35vw;
     height: 90vh;
-    background-color: #dddd;
+    background-color: #ddda;
     border-radius: 2em;
     margin: 1em;
 }
@@ -30,10 +30,10 @@ svg {
     margin: 0.5em;
 }
 
-/* .taipei {
-    fill: #639a67;
+.taipei {
+    /* fill: #639a67; */
     cursor: pointer;
-} */
+}
 
 .taipei:hover {
     fill: #666;
