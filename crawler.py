@@ -1,7 +1,10 @@
 #%%
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from time import sleep
+
+import requests
 
 
 def save(data, folder="data"):
@@ -14,21 +17,15 @@ def save(data, folder="data"):
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 
-#%%
-import requests
-
 url = r"https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.json"
+total_time = 15  # Minutes
 
-
-#%%
-from time import sleep
-
-for _ in range(15):
-    resp = requests.get(url, verify=False)
-    data = resp.json()
-    if data["retCode"] == 1:
-        data = data["retVal"]
-        save(data)
-    sleep(60)
-
-# %%
+# Start from here!
+if __name__ == "__main__":
+    for _ in range(total_time):
+        resp = requests.get(url, verify=False)
+        data = resp.json()
+        if data["retCode"] == 1:
+            data = data["retVal"]
+            save(data)
+        sleep(60)
