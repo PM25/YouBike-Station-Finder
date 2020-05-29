@@ -1,5 +1,6 @@
-window.onload = main;
 
+window.onload = main;
+x(d.x)
 function main() {
     var width = window.innerWidth,
         height = window.innerHeight;
@@ -44,41 +45,28 @@ function main() {
             var sna=[];
             for (let key in data["retVal"]) {
                 sna.push(data["retVal"][key]["sna"]);
-                sbi.push(data["retVal"][key]["sna"]);
+                sbi.push(data["retVal"][key]["sbi"]);
             }
             
-            /*
-            var area_data = {};
-            for (let key in data["retVal"]) {
-                area = data["retVal"][key];
-                if (area in area_data) {
-                    area_data[area].push(ubike_data[key]);
-                } else {
-                    area_data[area] = [];
-                }
-            }
-                var area_data = {};
-                area_data[key]["total"]["tot"] = area_data[key], "tot";
-                area_data[key]["total"]["sbi"] = sumup(area_data[key], "sbi");
-                area_data[key]["total"]["bemp"] = sumup(area_data[key], "bemp");*/
-           
-            //svg.select("g").selectAll("circle").remove();
-           
-            
+                 
             var update = group.selectAll("circle")
             .data(sna)
             .on("mouseover", function (d, i) {
                 
-                 group.append("text").attr("class", "title-text")
+                  d3.select(".sna")
                     .style("fill", "black")
-                    .text(sna[i])
-                    .attr("text-anchor", "middle")
-                    .attr("x", width-165) //需要調
-                    .attr("y", height-500);
-            })
-            .on("mouseout", function (d) {
-                group.select(".title-text").remove();
+                    .text("地點:".concat('', sna[i]))
+                    .attr("text-anchor", "middle");
+              
+                  d3.select(".sbi")
+                    .style("fill", "black")
+                    .text("數量:".concat('', sbi[i]))
+                    .attr("text-anchor", "middle");
             });
+            /*.on("mouseout", function (d) {
+               //d3.select(".content").remove();
+               //d3.select(".sbi").remove();
+            });*/
             
         });  
         //}, 2000);
@@ -104,9 +92,7 @@ function main() {
             }
             return total;
         }
-
         var area_data = {};
-
         for (let key in ubike_data) {
             area = ubike_data[key]["sarea"];
             if (area in area_data) {
@@ -115,7 +101,6 @@ function main() {
                 area_data[area] = [];
             }
         }
-
         for (let key in area_data) {
             area_data[key]["total"] = {};
             area_data[key]["total"]["tot"] = sumup(area_data[key], "tot");
@@ -158,14 +143,37 @@ function main() {
                function(d,i){return coordinates[i][1];}
 			)
 			.attr("fill", "red")
-			.attr("r", 1);
+			.attr("r", 0.5);
            /* .on("click", function(){
               //在这里添加交互内容
               console.log("hey");
             });*/
       
         // Draw Taipei City
-        
+  
+      //var v= d3.geoVoronoi().polygons(coordinates);
+       var voronoi = d3.voronoi();
+      //console.log(coordinates[10]);
+      var poly = voronoi(coordinates).polygons();
+      //console.log(voronoi(coordinates).edges);
+      group.selectAll("path").data(poly).enter().append("path").attr("d", polygon)
+      /*.attr("points",function(d) { 
+            return d.map(function(d) {
+                return [d[0],d[1]].join(",")
+            }).join(" ")
+        } )*/
+      .attr("fill", "none")
+      .attr("stroke","blue")
+      .attr("stroke-width",0.1);
+      
+       
+
+  function polygon(d) { 
+    return "M" + d.join("L") + "Z"; 
+  }
+      
+
+	
          group.append("path")
             .attr("class", "taipei")
             .attr("d", path)
@@ -193,10 +201,9 @@ function main() {
             .enter()
             .append("path")
             .attr("class", "non-taipei")
-            .attr("d", path);
-
+            .attr("d", path);*/
         // Draw Boundary
-        svg.append("path")
+        /*svg.append("path")
             .datum(
                 topojson.mesh(
                     taiwan,
@@ -211,6 +218,13 @@ function main() {
             )
             .attr("d", path)
             .attr("class", "boundary");*/
+
         
     });
 }
+
+
+  
+  
+
+
