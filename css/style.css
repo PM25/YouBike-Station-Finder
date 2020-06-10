@@ -29,22 +29,3 @@ svg {
     font-size: 2em;
     margin: 0.5em;
 }
-
-.taipei {
-    fill: #639a67;
-    cursor: pointer;
-}
-
-.taipei:hover {
-    fill: #666;
-}
-
-.non-taipei {
-    fill: #639a6755;
-}
-
-.boundary {
-    fill: none;
-    stroke: #fffd;
-    stroke-width: 0.01em;
-}

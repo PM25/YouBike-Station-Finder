@@ -4,6 +4,12 @@ function main() {
     var width = window.innerWidth,
         height = window.innerHeight;
 
+    const voronoi_color = "#639a67";
+    const voronoi_hover_color = "#639a67cc";
+    const voronoi_border_color = "#333";
+    const nontaipei_color = "#777";
+    const boundaries_color = "#dddd";
+
     var svg = d3.select("svg");
     var container = svg.append("g");
 
@@ -14,11 +20,10 @@ function main() {
         .translate([width / 3, height / 2]) // 置中
         .precision(0.1);
     var path = d3.geoPath().projection(projection);
-    // var voronoi = d3.voronoi().extent([
-    //     [0, 0],
-    //     [width, height],
-    // ]);
-    var voronoi = d3.voronoi();
+    var voronoi = d3.voronoi().extent([
+        [0, 0],
+        [width, height],
+    ]);
 
     const zoom = d3.zoom().scaleExtent([0.6, 100]).on("zoom", zoomed);
     svg.call(zoom);
@@ -61,66 +66,23 @@ function main() {
         }
 
         // Draw Map
-        let taipei = draw_map(container, values[0]);
 
-        container
-            .selectAll("_circle")
-            .data(coordinates)
-            .enter()
-            .append("circle")
-            .attr("class", "point")
-            .attr("cx", (coord) => {
-                return coord[0];
-            })
-            .attr("cy", (coord) => {
-                return coord[1];
-            })
-            .attr("fill", "#b66")
-            .attr("r", ".03em");
+        draw_taipei(container, values[0]);
 
-        // group
-        //     .selectAll("circle")
-        //     .data(sna)
-        //     .on("mouseover", function (d, i) {
-        //         d3.select(".sna")
-        //             .style("fill", "black")
-        //             .text("地點:".concat("", sna[i]))
-        //             .attr("text-anchor", "middle");
-
-        //         d3.select(".sbi")
-        //             .style("fill", "black")
-        //             .text("數量:".concat("", sbi[i]))
-        //             .attr("text-anchor", "middle");
-        //     });
-        console.log(voronoi().polygons(coordinates));
-        container
-            .selectAll("path")
-            .data(voronoi(coordinates).polygons())
-            .enter()
-            .append("path")
-            .attr("d", polygon)
-            .attr("fill", "none")
-            .attr("stroke", "blue")
-            .attr("stroke-width", ".01em");
-
-        function polygon(d) {
-            return "M" + d.join("L") + "Z";
-        }
+        console.log(voronoi(coordinates).polygons());
+        draw_voronoi(container, coordinates);
+        draw_non_taipei(container, values[0]);
+        draw_boundaries(container, values[0]);
+        draw_sites(container, coordinates);
     });
 
     // Draw Taiwan Map
-    function draw_map(root, geojson_tw) {
+    function draw_taipei(root, geojson_tw) {
         // Convert GeoJson to TopoJson Data
         taipei_features = topojson
             .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
             .features.filter(function (data) {
                 return data.properties.COUNTYNAME == "臺北市";
-            });
-
-        non_taipei_features = topojson
-            .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
-            .features.filter(function (data) {
-                return data.properties.COUNTYNAME != "臺北市";
             });
 
         // Draw Taipei
@@ -134,23 +96,72 @@ function main() {
             .attr("id", (data) => {
                 return "city" + data.properties.TOWNID;
             });
+    }
 
-        // Draw Towns that is not Taipei
+    function draw_sites(root, coordinates) {
+        root.selectAll("_circle")
+            .data(coordinates)
+            .enter()
+            .append("circle")
+            .attr("class", "point")
+            .attr("cx", (coord) => {
+                return coord[0];
+            })
+            .attr("cy", (coord) => {
+                return coord[1];
+            })
+            .attr("fill", "#b66")
+            .attr("r", ".03em");
+    }
+
+    function draw_voronoi(root, coordinates) {
+        root.selectAll("_path")
+            .data(voronoi(coordinates).polygons())
+            .enter()
+            .append("path")
+            .attr("class", "bound")
+            .attr("d", polygon)
+            .attr("stroke", voronoi_border_color)
+            .attr("stroke-width", ".01em")
+            .attr("cursor", "pointer")
+            .attr("fill", voronoi_color)
+            .on("mouseover", function () {
+                d3.select(this).attr("fill", voronoi_hover_color);
+            })
+            .on("mouseout", function () {
+                d3.select(this).attr("fill", voronoi_color);
+            });
+
+        function polygon(d) {
+            return "M" + d.join("L") + "Z";
+        }
+    }
+
+    function draw_non_taipei(root, geojson_tw) {
+        non_taipei_features = topojson
+            .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
+            .features.filter(function (data) {
+                return data.properties.COUNTYNAME != "臺北市";
+            });
+
         root.selectAll("path.non-taipei")
             .data(non_taipei_features)
             .enter()
             .append("path")
             .attr("class", "non-taipei")
-            .attr("d", path);
+            .attr("d", path)
+            .attr("fill", nontaipei_color);
+    }
 
-        // Draw Boundary
+    function draw_boundaries(root, geojson_tw) {
         root.append("path")
             .datum(
                 topojson.mesh(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
             )
             .attr("d", path)
-            .attr("class", "boundary");
-
-        return taipei;
+            .attr("class", "boundary")
+            .attr("fill", "None")
+            .attr("stroke", boundaries_color)
+            .attr("stroke-width", "0.01em");
     }
 }
