@@ -1,6 +1,5 @@
 body {
     margin: 0;
-    background-color: #77d8d8;
 }
 
 .container {
@@ -20,13 +19,19 @@ svg {
     max-width: 30vw;
     min-width: 20vw;
     height: 50vh;
-    background-color: #ddda;
     border-radius: 0.5em;
     margin: 1em;
+    padding: 0.8em;
+
+    color: #222;
+    background-color: #dddd;
 }
 
 #info > .title {
     text-align: center;
     font-size: 1.5em;
-    margin: 0.5em;
+}
+
+#info > .datetime {
+    margin: 0.5em 0;
 }

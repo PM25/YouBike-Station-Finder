@@ -3,8 +3,9 @@ window.onload = main;
 const voronoi_color = "#639a67";
 const voronoi_hover_color = "#639a67cc";
 const voronoi_border_color = "#333";
-const nontaipei_color = "#777";
+const nontaipei_color = "#999";
 const boundaries_color = "#dddd";
+const background_color = "#e8e4e1";
 
 function main() {
     var width = window.innerWidth,
@@ -40,11 +41,11 @@ function main() {
     var files = [
         "data/TOWN_MOI_1090324.json",
         "https://raw.githubusercontent.com/ycychsiao/tmp/master/Taipei_UBike_site.json",
-        "https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.json",
     ];
 
-    // Start from here!
     Promise.all(files.map((url) => d3.json(url))).then(function (values) {
+        d3.select("body").style("background-color", background_color);
+        geojson_tw = values[0];
         sites_data = values[1];
         var sites = {
             coordinates: [],
@@ -55,15 +56,27 @@ function main() {
             sites.coordinates.push(projection(coordinate));
             sites.ids.push(key);
         }
-        ubikes_data = values[2];
-        if (ubikes_data.retCode == 1) {
-            ubikes_data = ubikes_data.retVal;
-            // Draw Map
-            draw_taipei(container, values[0]);
-            draw_voronoi(container, sites, ubikes_data);
-            draw_non_taipei(container, values[0]);
-            draw_boundaries(container, values[0]);
-            draw_sites(container, sites.coordinates);
+
+        main();
+        setInterval(main, 60000);
+
+        // Start from here!
+        function main() {
+            d3.json(
+                "https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.json"
+            ).then(function (ubikes_data) {
+                if (ubikes_data.retCode == 1) {
+                    ubikes_data = ubikes_data.retVal;
+
+                    clear_all(container);
+                    draw_taipei(container, geojson_tw);
+                    draw_voronoi(container, sites, ubikes_data);
+                    draw_non_taipei(container, geojson_tw);
+                    draw_boundaries(container, geojson_tw);
+                    draw_sites(container, sites.coordinates);
+                    update_time();
+                }
+            });
         }
     });
 
@@ -118,7 +131,7 @@ function main() {
             .attr("fill", voronoi_color)
             .on("mouseover", function (d, i) {
                 let id = sites.ids[i];
-                d3.select("#info .content").html(dict2text(ubikes_data[id]));
+                update_info(dict2text(ubikes_data[id]));
                 d3.select(this).attr("fill", voronoi_hover_color);
             })
             .on("mouseout", function () {
@@ -134,11 +147,15 @@ function main() {
         let sitename = dict.sna,
             totalslot = dict.tot,
             sitebike = dict.sbi,
-            emptybike = dict.bemp;
+            emptybike = dict.bemp,
+            sitearea = dict.sarea;
 
         return (
             "名稱: " +
             sitename +
+            "<br>" +
+            "行政區: " +
+            sitearea +
             "<br>" +
             "總停車格: " +
             totalslot +
@@ -177,5 +194,19 @@ function main() {
             .attr("fill", "None")
             .attr("stroke", boundaries_color)
             .attr("stroke-width", "0.01em");
+    }
+
+    function update_info(content) {
+        d3.select("#info .content").html(content);
+    }
+
+    function update_time() {
+        var today = new Date();
+        var current_time = today.getHours() + "點 " + today.getMinutes() + "分";
+        d3.select("#info .datetime").html("資料更新時間: " + current_time);
+    }
+
+    function clear_all(root) {
+        root.html("");
     }
 }
