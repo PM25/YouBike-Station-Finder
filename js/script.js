@@ -23,6 +23,12 @@ function main() {
     var path = d3.geoPath().projection(projection);
     var voronoi = d3.voronoi().size([width, height]);
 
+    var map = new google.maps.Map(d3.select("#map").node(), {
+        zoom: 11,
+        center: new google.maps.LatLng(25.085, 121.5654),
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+    });
+
     const zoom = d3
         .zoom()
         .scaleExtent([0.6, 100])
@@ -45,6 +51,8 @@ function main() {
 
     Promise.all(files.map((url) => d3.json(url))).then(function (values) {
         d3.select("body").style("background-color", background_color);
+        d3.select("#map").style("width", "100vw").style("height", "100vh");
+
         geojson_tw = values[0];
         sites_data = values[1];
         var sites = {
@@ -69,6 +77,7 @@ function main() {
                     ubikes_data = ubikes_data.retVal;
 
                     clear_all(container);
+                    draw_google_map(sites_data["id"]);
                     draw_taipei(container, geojson_tw);
                     draw_voronoi(container, sites, ubikes_data);
                     draw_non_taipei(container, geojson_tw);
@@ -208,5 +217,58 @@ function main() {
 
     function clear_all(root) {
         root.html("");
+    }
+
+    function draw_google_map(data) {
+        var overlay = new google.maps.OverlayView();
+
+        // Add the container when the overlay is added to the map.
+        overlay.onAdd = function () {
+            var layer = d3
+                .select(this.getPanes().overlayLayer)
+                .append("div")
+                .attr("class", "stations");
+
+            // Draw each marker as a separate SVG element.
+            // We could use a single SVG, but what size would it have?
+            overlay.draw = function () {
+                var projection = this.getProjection(),
+                    padding = 10;
+
+                var marker = layer
+                    .selectAll("svg")
+                    .data(d3.entries(data))
+                    .each(transform) // update existing markers
+                    .enter()
+                    .append("svg")
+                    .each(transform)
+                    .attr("class", "marker")
+                    .style("position", "absolute");
+
+                // Add a circle.
+                marker
+                    .append("circle")
+                    .attr("r", 4.5)
+                    .attr("cx", padding)
+                    .attr("cy", padding)
+                    .attr("fill", "brown")
+                    .attr("stroke", "black");
+
+                function transform(d) {
+                    d = new google.maps.LatLng(
+                        d.value.coordinate[1],
+                        d.value.coordinate[0]
+                    );
+                    d = projection.fromLatLngToDivPixel(d);
+                    return d3
+                        .select(this)
+                        .style("left", d.x - padding + "px")
+                        .style("top", d.y - padding + "px");
+                }
+            };
+        };
+
+        // Bind our overlay to the map…
+        overlay.setMap(map);
     }
 }
