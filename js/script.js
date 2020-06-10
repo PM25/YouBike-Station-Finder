@@ -1,10 +1,17 @@
 window.onload = main;
 
+const voronoi_color = "#639a67";
+const voronoi_hover_color = "#639a67cc";
+const voronoi_border_color = "#333";
+const nontaipei_color = "#777";
+const boundaries_color = "#dddd";
+
 function main() {
     var width = window.innerWidth,
         height = window.innerHeight;
 
     var svg = d3.select("svg");
+    var container = svg.append("g");
 
     var projection = d3
         .geoMercator()
@@ -13,14 +20,15 @@ function main() {
         .translate([width / 3, height / 2]) // 置中
         .precision(0.1);
     var path = d3.geoPath().projection(projection);
+    var voronoi = d3.voronoi().size([width, height]);
 
-    const zoom = d3.zoom().scaleExtent([0.6, 10]).on("zoom", zoomed);
+    const zoom = d3
+        .zoom()
+        .scaleExtent([0.6, 100])
+        .on("zoom", function zoomed() {
+            svg.selectAll("g").attr("transform", d3.event.transform);
+        });
     svg.call(zoom);
-
-    function zoomed() {
-        svg.selectAll("path") // To prevent stroke width from scaling
-            .attr("transform", d3.event.transform);
-    }
 
     // Data and color scale
     var colorScale = d3
@@ -28,103 +36,146 @@ function main() {
         .domain([100, 200, 400, 700, 1000, 1500, 2000])
         .range(d3.schemeBlues[7]);
 
-    var files = ["data/TOWN_MOI_1090324.json", "data/2020-04-11_21-29-13.json"];
+    // External Files
+    var files = [
+        "data/TOWN_MOI_1090324.json",
+        "https://raw.githubusercontent.com/ycychsiao/tmp/master/Taipei_UBike_site.json",
+        "https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.json",
+    ];
 
+    // Start from here!
     Promise.all(files.map((url) => d3.json(url))).then(function (values) {
-        // Load Data
-        ubike_data = values[1];
-
-        function sumup(arr, key) {
-            total = 0;
-            for (var i = 0; i < arr.length; ++i) {
-                total += parseInt(arr[i][key]);
-            }
-            return total;
+        sites_data = values[1];
+        var sites = {
+            coordinates: [],
+            ids: [],
+        };
+        for (let key in sites_data["id"]) {
+            let coordinate = sites_data["id"][key].coordinate;
+            sites.coordinates.push(projection(coordinate));
+            sites.ids.push(key);
         }
-
-        var area_data = {};
-
-        for (let key in ubike_data) {
-            area = ubike_data[key]["sarea"];
-            if (area in area_data) {
-                area_data[area].push(ubike_data[key]);
-            } else {
-                area_data[area] = [];
-            }
+        ubikes_data = values[2];
+        if (ubikes_data.retCode == 1) {
+            ubikes_data = ubikes_data.retVal;
+            // Draw Map
+            draw_taipei(container, values[0]);
+            draw_voronoi(container, sites, ubikes_data);
+            draw_non_taipei(container, values[0]);
+            draw_boundaries(container, values[0]);
+            draw_sites(container, sites.coordinates);
         }
+    });
 
-        for (let key in area_data) {
-            area_data[key]["total"] = {};
-            area_data[key]["total"]["tot"] = sumup(area_data[key], "tot");
-            area_data[key]["total"]["sbi"] = sumup(area_data[key], "sbi");
-            area_data[key]["total"]["bemp"] = sumup(area_data[key], "bemp");
-        }
-
-        // Draw Map
-        taiwan = values[0];
-
+    // Draw Taiwan Map
+    function draw_taipei(root, geojson_tw) {
+        // Convert GeoJson to TopoJson Data
         taipei_features = topojson
-            .feature(taiwan, taiwan.objects.TOWN_MOI_1090324)
+            .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
             .features.filter(function (data) {
-                // console.log(data.properties.COUNTYNAME);
                 return data.properties.COUNTYNAME == "臺北市";
             });
 
-        non_taipei_features = topojson
-            .feature(taiwan, taiwan.objects.TOWN_MOI_1090324)
-            .features.filter(function (data) {
-                // console.log(data.properties.COUNTYNAME);
-                return data.properties.COUNTYNAME != "臺北市";
-            });
-
-        // Draw Taipei City
-        svg.selectAll("path")
+        // Draw Taipei
+        let taipei = root
+            .selectAll("path.taipei")
             .data(taipei_features)
             .enter()
             .append("path")
             .attr("class", "taipei")
             .attr("d", path)
-            .attr("fill", function (data) {
-                // data.total = area_data.get(data.TOWNNAME) || 0;
-                console.log(
-                    data.properties.TOWNNAME,
-                    area_data[data.properties.TOWNNAME]["total"]["bemp"]
-                );
-                return colorScale(
-                    area_data[data.properties.TOWNNAME]["total"]["bemp"]
-                );
-            })
             .attr("id", (data) => {
                 return "city" + data.properties.TOWNID;
+            });
+    }
+
+    function draw_sites(root, coordinates) {
+        root.selectAll("_circle")
+            .data(coordinates)
+            .enter()
+            .append("circle")
+            .attr("class", "point")
+            .attr("cx", (coord) => {
+                return coord[0];
             })
-            .on("mouseover", (data) => {
-                document.querySelector(".info .content").innerHTML =
-                    data.properties.TOWNNAME;
+            .attr("cy", (coord) => {
+                return coord[1];
+            })
+            .attr("fill", "#b66")
+            .attr("r", ".03em");
+    }
+
+    function draw_voronoi(root, sites, ubikes_data) {
+        root.selectAll("_path")
+            .data(voronoi(sites.coordinates).polygons())
+            .enter()
+            .append("path")
+            .attr("class", "bound")
+            .attr("d", polygon)
+            .attr("stroke", voronoi_border_color)
+            .attr("stroke-width", ".01em")
+            .attr("cursor", "pointer")
+            .attr("fill", voronoi_color)
+            .on("mouseover", function (d, i) {
+                let id = sites.ids[i];
+                d3.select("#info .content").html(dict2text(ubikes_data[id]));
+                d3.select(this).attr("fill", voronoi_hover_color);
+            })
+            .on("mouseout", function () {
+                d3.select(this).attr("fill", voronoi_color);
             });
 
-        // Draw Towns that is not Taipei
-        svg.selectAll("path.non-taipei")
+        function polygon(d) {
+            return "M" + d.join("L") + "Z";
+        }
+    }
+
+    function dict2text(dict) {
+        let sitename = dict.sna,
+            totalslot = dict.tot,
+            sitebike = dict.sbi,
+            emptybike = dict.bemp;
+
+        return (
+            "名稱: " +
+            sitename +
+            "<br>" +
+            "總停車格: " +
+            totalslot +
+            "<br>" +
+            "可借車輛數: " +
+            sitebike +
+            "<br>" +
+            "可還空位數: " +
+            emptybike
+        );
+    }
+
+    function draw_non_taipei(root, geojson_tw) {
+        non_taipei_features = topojson
+            .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
+            .features.filter(function (data) {
+                return data.properties.COUNTYNAME != "臺北市";
+            });
+
+        root.selectAll("path.non-taipei")
             .data(non_taipei_features)
             .enter()
             .append("path")
             .attr("class", "non-taipei")
-            .attr("d", path);
+            .attr("d", path)
+            .attr("fill", nontaipei_color);
+    }
 
-        // Draw Boundary
-        svg.append("path")
+    function draw_boundaries(root, geojson_tw) {
+        root.append("path")
             .datum(
-                topojson.mesh(
-                    taiwan,
-                    taiwan.objects.TOWN_MOI_1090324
-                    // function (a, b) {
-                    //     return (
-                    //         a.properties.COUNTYNAME == "臺北市" ||
-                    //         b.properties.COUNTYNAME == "臺北市"
-                    //     );
-                    // }
-                )
+                topojson.mesh(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
             )
             .attr("d", path)
-            .attr("class", "boundary");
-    });
+            .attr("class", "boundary")
+            .attr("fill", "None")
+            .attr("stroke", boundaries_color)
+            .attr("stroke-width", "0.01em");
+    }
 }

@@ -17,15 +17,16 @@ svg {
     position: fixed;
     right: 0;
     top: 0;
-    width: 35vw;
-    height: 90vh;
+    max-width: 30vw;
+    min-width: 20vw;
+    height: 50vh;
     background-color: #ddda;
-    border-radius: 2em;
+    border-radius: 0.5em;
     margin: 1em;
 }
 
 #info > .title {
     text-align: center;
-    font-size: 2em;
+    font-size: 1.5em;
     margin: 0.5em;
 }
