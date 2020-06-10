@@ -13,7 +13,7 @@ svg {
     height: 100vh;
 }
 
-.info {
+#info {
     position: fixed;
     right: 0;
     top: 0;
@@ -24,14 +24,14 @@ svg {
     margin: 1em;
 }
 
-.info > .title {
+#info > .title {
     text-align: center;
     font-size: 2em;
     margin: 0.5em;
 }
 
 .taipei {
-    fill: #639a67; 
+    fill: #639a67;
     cursor: pointer;
 }
 
