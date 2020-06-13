@@ -39,13 +39,3 @@ body {
     width: 4000px;
     height: 4000px;
 }
-
-/* #top {
-    position: fixed;
-    top: -2000px;
-    left: -2000px;
-    width: 4000px;
-    height: 4000px;
-    z-index: 100;
-    cursor: pointer;
-} */
