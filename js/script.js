@@ -24,8 +24,8 @@ function main() {
     var voronoi = d3.voronoi().size([width, height]);
 
     var map = new google.maps.Map(d3.select("#map").node(), {
-        zoom: 11,
-        center: new google.maps.LatLng(25.085, 121.5654),
+        zoom: 12,
+        center: new google.maps.LatLng(25.065, 121.5654),
         mapTypeId: google.maps.MapTypeId.ROADMAP,
     });
 
@@ -44,10 +44,7 @@ function main() {
         .range(d3.schemeBlues[7]);
 
     // External Files
-    var files = [
-        "data/TOWN_MOI_1090324.json",
-        "https://raw.githubusercontent.com/ycychsiao/tmp/master/Taipei_UBike_site.json",
-    ];
+    var files = ["data/TOWN_MOI_1090324.json", "data/taipei_ubike_sites.json"];
 
     Promise.all(files.map((url) => d3.json(url))).then(function (values) {
         d3.select("body").style("background-color", background_color);
@@ -59,12 +56,13 @@ function main() {
             coordinates: [],
             ids: [],
         };
-        for (let key in sites_data["id"]) {
-            let coordinate = sites_data["id"][key].coordinate;
+        for (let key in sites_data) {
+            let coordinate = sites_data[key].coordinate;
             sites.coordinates.push(projection(coordinate));
             sites.ids.push(key);
         }
 
+        draw_google_map(sites_data);
         main();
         setInterval(main, 60000);
 
@@ -77,7 +75,6 @@ function main() {
                     ubikes_data = ubikes_data.retVal;
 
                     clear_all(container);
-                    draw_google_map(sites_data["id"]);
                     draw_taipei(container, geojson_tw);
                     draw_voronoi(container, sites, ubikes_data);
                     draw_non_taipei(container, geojson_tw);
@@ -99,8 +96,7 @@ function main() {
             });
 
         // Draw Taipei
-        let taipei = root
-            .selectAll("path.taipei")
+        root.selectAll("path.taipei")
             .data(taipei_features)
             .enter()
             .append("path")
@@ -222,53 +218,85 @@ function main() {
     function draw_google_map(data) {
         var overlay = new google.maps.OverlayView();
 
-        // Add the container when the overlay is added to the map.
         overlay.onAdd = function () {
-            var layer = d3
+            const layer = d3
                 .select(this.getPanes().overlayLayer)
                 .append("div")
-                .attr("class", "stations");
+                .attr("class", "SvgOverlay");
+            const svg = layer.append("svg");
+            const svg_overlay = svg.append("g").attr("class", "AdminDivisions");
+            const pointLayer = svg_overlay.append("g");
+            const voronoiLayer = svg_overlay.append("g");
+            const markerOverlay = this;
+            const overlayProjection = markerOverlay.getProjection();
 
-            // Draw each marker as a separate SVG element.
-            // We could use a single SVG, but what size would it have?
+            const googleMapProjection = (coordinates) => {
+                const googleCoordinates = new google.maps.LatLng(
+                    coordinates[1],
+                    coordinates[0]
+                );
+                const pixelCoordinates = overlayProjection.fromLatLngToDivPixel(
+                    googleCoordinates
+                );
+                return [pixelCoordinates.x + 1000, pixelCoordinates.y + 1000];
+            };
+
             overlay.draw = function () {
-                var projection = this.getProjection(),
-                    padding = 10;
+                const width = svg.node().clientWidth;
+                const height = svg.node().clientHeight;
 
-                var marker = layer
-                    .selectAll("svg")
-                    .data(d3.entries(data))
-                    .each(transform) // update existing markers
+                // const pointdata = pointjson.features;
+                const positions = [];
+
+                d3.entries(data).forEach((d) => {
+                    positions.push(googleMapProjection(d.value.coordinate));
+                });
+
+                const updatePoint = pointLayer
+                    .selectAll(".point")
+                    .data(positions);
+                const enterPoint = updatePoint
                     .enter()
-                    .append("svg")
-                    .each(transform)
-                    .attr("class", "marker")
-                    .style("position", "absolute");
-
-                // Add a circle.
-                marker
                     .append("circle")
-                    .attr("r", 4.5)
-                    .attr("cx", padding)
-                    .attr("cy", padding)
+                    .attr("class", "point")
+                    .attr("r", 2)
                     .attr("fill", "brown")
                     .attr("stroke", "black");
+
+                const point = updatePoint
+                    .merge(enterPoint)
+                    .attr("transform", (d) => `translate(${d[0]}, ${d[1]})`);
+
+                const voronoi = d3.voronoi().size([width + 1, height + 1]);
+
+                const polygons = voronoi(positions).polygons();
+
+                voronoiLayer.selectAll(".cell").remove();
+                voronoiLayer
+                    .selectAll(".cell")
+                    .data(polygons)
+                    .enter()
+                    .append("path")
+                    .attr("class", "cell")
+                    .attr("fill", "none")
+                    .attr("stroke", voronoi_border_color)
+                    .attr("d", (d) => {
+                        if (!d) return null;
+                        return (
+                            "M" + d.filter((df) => df != null).join("L") + "Z"
+                        );
+                    });
 
                 function transform(d) {
                     d = new google.maps.LatLng(
                         d.value.coordinate[1],
                         d.value.coordinate[0]
                     );
-                    d = projection.fromLatLngToDivPixel(d);
-                    return d3
-                        .select(this)
-                        .style("left", d.x - padding + "px")
-                        .style("top", d.y - padding + "px");
+                    return projection.fromLatLngToDivPixel(d);
                 }
             };
         };
 
-        // Bind our overlay to the map…
         overlay.setMap(map);
     }
 }
