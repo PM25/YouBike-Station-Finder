@@ -26,16 +26,26 @@ body {
     margin: 0.5em 0;
 }
 
-.SvgOverlay {
+.svgoverlay {
     position: relative;
     width: 100vw;
     height: 100vh;
 }
 
-.SvgOverlay svg {
+.svgoverlay svg {
     position: absolute;
-    top: -1000px;
-    left: -1000px;
+    top: -2000px;
+    left: -2000px;
     width: 4000px;
     height: 4000px;
 }
+
+/* #top {
+    position: fixed;
+    top: -2000px;
+    left: -2000px;
+    width: 4000px;
+    height: 4000px;
+    z-index: 100;
+    cursor: pointer;
+} */

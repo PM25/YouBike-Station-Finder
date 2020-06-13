@@ -1,8 +1,9 @@
 window.onload = main;
 
-const voronoi_color = "#639a67";
+const voronoi_color = "transparent";
 const voronoi_hover_color = "#639a67cc";
 const voronoi_border_color = "#333";
+const site_color = "brown";
 const nontaipei_color = "#999";
 const boundaries_color = "#dddd";
 const background_color = "#e8e4e1";
@@ -12,7 +13,7 @@ function main() {
         height = window.innerHeight;
 
     var svg = d3.select("svg");
-    var container = svg.append("g");
+    // var container = svg.append("g");
 
     var projection = d3
         .geoMercator()
@@ -74,229 +75,204 @@ function main() {
                 if (ubikes_data.retCode == 1) {
                     ubikes_data = ubikes_data.retVal;
 
-                    clear_all(container);
-                    draw_taipei(container, geojson_tw);
-                    draw_voronoi(container, sites, ubikes_data);
-                    draw_non_taipei(container, geojson_tw);
-                    draw_boundaries(container, geojson_tw);
-                    draw_sites(container, sites.coordinates);
+                    // clear_all(container);
+                    // draw_taipei(container, geojson_tw);
+                    // draw_voronoi(container, sit es, ubikes_data);
+                    // draw_non_taipei(container, geojson_tw);
+                    // draw_boundaries(container, geojson_tw);
+                    // draw_sites(container, sites.coordinates);
                     update_time();
                 }
             });
         }
     });
 
-    // Draw Taiwan Map
-    function draw_taipei(root, geojson_tw) {
-        // Convert GeoJson to TopoJson Data
-        taipei_features = topojson
-            .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
-            .features.filter(function (data) {
-                return data.properties.COUNTYNAME == "臺北市";
-            });
-
-        // Draw Taipei
-        root.selectAll("path.taipei")
-            .data(taipei_features)
-            .enter()
-            .append("path")
-            .attr("class", "taipei")
-            .attr("d", path)
-            .attr("id", (data) => {
-                return "city" + data.properties.TOWNID;
-            });
-    }
-
-    function draw_sites(root, coordinates) {
-        root.selectAll("_circle")
-            .data(coordinates)
-            .enter()
-            .append("circle")
-            .attr("class", "point")
-            .attr("cx", (coord) => {
-                return coord[0];
-            })
-            .attr("cy", (coord) => {
-                return coord[1];
-            })
-            .attr("fill", "#b66")
-            .attr("r", ".03em");
-    }
-
-    function draw_voronoi(root, sites, ubikes_data) {
-        root.selectAll("_path")
-            .data(voronoi(sites.coordinates).polygons())
-            .enter()
-            .append("path")
-            .attr("class", "bound")
-            .attr("d", polygon)
-            .attr("stroke", voronoi_border_color)
-            .attr("stroke-width", ".01em")
-            .attr("cursor", "pointer")
-            .attr("fill", voronoi_color)
-            .on("mouseover", function (d, i) {
-                let id = sites.ids[i];
-                update_info(dict2text(ubikes_data[id]));
-                d3.select(this).attr("fill", voronoi_hover_color);
-            })
-            .on("mouseout", function () {
-                d3.select(this).attr("fill", voronoi_color);
-            });
-
-        function polygon(d) {
-            return "M" + d.join("L") + "Z";
-        }
-    }
-
-    function dict2text(dict) {
-        let sitename = dict.sna,
-            totalslot = dict.tot,
-            sitebike = dict.sbi,
-            emptybike = dict.bemp,
-            sitearea = dict.sarea;
-
-        return (
-            "名稱: " +
-            sitename +
-            "<br>" +
-            "行政區: " +
-            sitearea +
-            "<br>" +
-            "總停車格: " +
-            totalslot +
-            "<br>" +
-            "可借車輛數: " +
-            sitebike +
-            "<br>" +
-            "可還空位數: " +
-            emptybike
-        );
-    }
-
-    function draw_non_taipei(root, geojson_tw) {
-        non_taipei_features = topojson
-            .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
-            .features.filter(function (data) {
-                return data.properties.COUNTYNAME != "臺北市";
-            });
-
-        root.selectAll("path.non-taipei")
-            .data(non_taipei_features)
-            .enter()
-            .append("path")
-            .attr("class", "non-taipei")
-            .attr("d", path)
-            .attr("fill", nontaipei_color);
-    }
-
-    function draw_boundaries(root, geojson_tw) {
-        root.append("path")
-            .datum(
-                topojson.mesh(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
-            )
-            .attr("d", path)
-            .attr("class", "boundary")
-            .attr("fill", "None")
-            .attr("stroke", boundaries_color)
-            .attr("stroke-width", "0.01em");
-    }
-
-    function update_info(content) {
-        d3.select("#info .content").html(content);
-    }
-
-    function update_time() {
-        var today = new Date();
-        var current_time = today.getHours() + "點 " + today.getMinutes() + "分";
-        d3.select("#info .datetime").html("資料更新時間: " + current_time);
-    }
-
-    function clear_all(root) {
-        root.html("");
-    }
-
     function draw_google_map(data) {
         var overlay = new google.maps.OverlayView();
 
         overlay.onAdd = function () {
-            const layer = d3
+            let layer = d3
                 .select(this.getPanes().overlayLayer)
                 .append("div")
-                .attr("class", "SvgOverlay");
-            const svg = layer.append("svg");
-            const svg_overlay = svg.append("g").attr("class", "AdminDivisions");
-            const pointLayer = svg_overlay.append("g");
-            const voronoiLayer = svg_overlay.append("g");
-            const markerOverlay = this;
-            const overlayProjection = markerOverlay.getProjection();
+                .attr("class", "svgoverlay");
+            let svg = layer.append("svg");
+            let svg_overlay = svg.append("g").attr("class", "admindivisions");
+            let point_layer = svg_overlay.append("g");
+            let voronoi_layer = svg_overlay.append("g");
+            let overlay_projection = this.getProjection();
 
-            const googleMapProjection = (coordinates) => {
-                const googleCoordinates = new google.maps.LatLng(
+            let svg_width = svg.node().clientWidth;
+            let svg_height = svg.node().clientHeight;
+            let voronoi = d3.voronoi().size([svg_width + 1, svg_height + 1]);
+
+            // map.addListener("mouseover", function (e) {
+            //     // placeMarkerAndPanTo(e.latLng, map);
+            //     console.log(e);
+            // });
+
+            overlay.draw = function () {
+                let positions = [],
+                    pos = [];
+                d3.entries(data).forEach((d) => {
+                    positions.push(google_map_projection(d.value.coordinate));
+                    pos.push([d.value.coordinate[1], d.value.coordinate[0]]);
+                });
+
+                draw_voronoi(voronoi_layer, positions, voronoi);
+                draw_sites(point_layer, positions);
+            };
+
+            // Transform Latitude and Longitude to Pixel Position
+            function google_map_projection(coordinates) {
+                let google_coordinates = new google.maps.LatLng(
                     coordinates[1],
                     coordinates[0]
                 );
-                const pixelCoordinates = overlayProjection.fromLatLngToDivPixel(
-                    googleCoordinates
+                let pixel_coordinates = overlay_projection.fromLatLngToDivPixel(
+                    google_coordinates
                 );
-                return [pixelCoordinates.x + 1000, pixelCoordinates.y + 1000];
-            };
-
-            overlay.draw = function () {
-                const width = svg.node().clientWidth;
-                const height = svg.node().clientHeight;
-
-                // const pointdata = pointjson.features;
-                const positions = [];
-
-                d3.entries(data).forEach((d) => {
-                    positions.push(googleMapProjection(d.value.coordinate));
-                });
-
-                const updatePoint = pointLayer
-                    .selectAll(".point")
-                    .data(positions);
-                const enterPoint = updatePoint
-                    .enter()
-                    .append("circle")
-                    .attr("class", "point")
-                    .attr("r", 2)
-                    .attr("fill", "brown")
-                    .attr("stroke", "black");
-
-                const point = updatePoint
-                    .merge(enterPoint)
-                    .attr("transform", (d) => `translate(${d[0]}, ${d[1]})`);
-
-                const voronoi = d3.voronoi().size([width + 1, height + 1]);
-
-                const polygons = voronoi(positions).polygons();
-
-                voronoiLayer.selectAll(".cell").remove();
-                voronoiLayer
-                    .selectAll(".cell")
-                    .data(polygons)
-                    .enter()
-                    .append("path")
-                    .attr("class", "cell")
-                    .attr("fill", "none")
-                    .attr("stroke", voronoi_border_color)
-                    .attr("d", (d) => {
-                        if (!d) return null;
-                        return (
-                            "M" + d.filter((df) => df != null).join("L") + "Z"
-                        );
-                    });
-
-                function transform(d) {
-                    d = new google.maps.LatLng(
-                        d.value.coordinate[1],
-                        d.value.coordinate[0]
-                    );
-                    return projection.fromLatLngToDivPixel(d);
-                }
-            };
+                return [pixel_coordinates.x + 2000, pixel_coordinates.y + 2000];
+            }
         };
 
         overlay.setMap(map);
     }
+}
+
+// Draw Taiwan Map
+function draw_taipei(root, geojson_tw) {
+    // Convert GeoJson to TopoJson Data
+    taipei_features = topojson
+        .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
+        .features.filter(function (data) {
+            return data.properties.COUNTYNAME == "臺北市";
+        });
+
+    // Draw Taipei
+    root.selectAll("path.taipei")
+        .data(taipei_features)
+        .enter()
+        .append("path")
+        .attr("class", "taipei")
+        .attr("d", path)
+        .attr("id", (data) => {
+            return "city" + data.properties.TOWNID;
+        });
+}
+
+function draw_sites(root, coordinates) {
+    let updatePoint = root.selectAll(".point").data(coordinates);
+    let enterPoint = updatePoint
+        .enter()
+        .append("circle")
+        .attr("class", "point")
+        .attr("r", 1.5)
+        .attr("fill", site_color)
+        .attr("stroke", "black");
+
+    updatePoint
+        .merge(enterPoint)
+        .attr("cx", (d) => d[0])
+        .attr("cy", (d) => d[1]);
+}
+
+function draw_voronoi(root, sites, voronoi) {
+    root.selectAll(".cell").remove();
+    root.selectAll(".cell")
+        .data(voronoi(sites).polygons())
+        .enter()
+        .append("path")
+        .attr("class", "cell")
+        .attr("fill", voronoi_color)
+        .attr("stroke", voronoi_border_color)
+        .attr("d", (d) => {
+            if (!d) return null;
+            return "M" + d.filter((df) => df != null).join("L") + "Z";
+        })
+        .style("z-index", 10)
+        .attr("cursor", "help");
+
+    // root.selectAll("_path")
+    //     .data(voronoi(sites.coordinates).polygons())
+    //     .enter()
+    //     .append("path")
+    //     .attr("class", "bound")
+    //     .attr("d", polygon)
+    //     .attr("stroke", voronoi_border_color)
+    //     .attr("stroke-width", ".01em")
+    //     .attr("cursor", "pointer")
+    //     .attr("fill", voronoi_color)
+    //     .on("mouseover", function (d, i) {
+    //         let id = sites.ids[i];
+    //         update_info(dict2text(ubikes_data[id]));
+    //         d3.select(this).attr("fill", voronoi_hover_color);
+    //     })
+    //     .on("mouseout", function () {
+    //         d3.select(this).attr("fill", voronoi_color);
+    //     });
+}
+
+function dict2text(dict) {
+    let sitename = dict.sna,
+        totalslot = dict.tot,
+        sitebike = dict.sbi,
+        emptybike = dict.bemp,
+        sitearea = dict.sarea;
+
+    return (
+        "名稱: " +
+        sitename +
+        "<br>" +
+        "行政區: " +
+        sitearea +
+        "<br>" +
+        "總停車格: " +
+        totalslot +
+        "<br>" +
+        "可借車輛數: " +
+        sitebike +
+        "<br>" +
+        "可還空位數: " +
+        emptybike
+    );
+}
+
+function draw_non_taipei(root, geojson_tw) {
+    non_taipei_features = topojson
+        .feature(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324)
+        .features.filter(function (data) {
+            return data.properties.COUNTYNAME != "臺北市";
+        });
+
+    root.selectAll("path.non-taipei")
+        .data(non_taipei_features)
+        .enter()
+        .append("path")
+        .attr("class", "non-taipei")
+        .attr("d", path)
+        .attr("fill", nontaipei_color);
+}
+
+function draw_boundaries(root, geojson_tw) {
+    root.append("path")
+        .datum(topojson.mesh(geojson_tw, geojson_tw.objects.TOWN_MOI_1090324))
+        .attr("d", path)
+        .attr("class", "boundary")
+        .attr("fill", "None")
+        .attr("stroke", boundaries_color)
+        .attr("stroke-width", "0.01em");
+}
+
+function update_info(content) {
+    d3.select("#info .content").html(content);
+}
+
+function update_time() {
+    var today = new Date();
+    var current_time = today.getHours() + "點 " + today.getMinutes() + "分";
+    d3.select("#info .datetime").html("資料更新時間: " + current_time);
+}
+
+function clear_all(root) {
+    root.html("");
 }
