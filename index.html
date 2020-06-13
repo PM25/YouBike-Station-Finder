@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width" />
         <link rel="stylesheet" href="css/style.css" />
         <link rel="icon" href="img/bicycle.png" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCry-N7OmyPr5PK81akHssN7Z5SfHhKLh4&callback=initMap"></script>
         <script src="https://d3js.org/d3.v5.min.js"></script>
         <script src="https://d3js.org/topojson.v2.min.js"></script>
@@ -19,6 +20,10 @@
         <div id="map"></div>
         <div id="info">
             <div class="title">顯示資訊</div>
+            <div class="search">
+                <input type="text" placeholder="Search.." id="search-bar"/>
+                <button type="submit" id="search-btn"><i class="fa fa-search"></i>
+            </div>
             <div class="datetime"></div>
             <div class="content"></div>
         </div>

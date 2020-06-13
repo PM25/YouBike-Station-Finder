@@ -30,6 +30,19 @@ function main() {
         main();
         setInterval(main, 60000);
 
+        d3.select("#search-btn").on("click", function () {
+            let address = d3.select("#search-bar").property("value");
+            d3.json(
+                "https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyCry-N7OmyPr5PK81akHssN7Z5SfHhKLh4&address=" +
+                    encodeURI(address)
+            ).then(function (data) {
+                if (data.status == "OK") {
+                    map.setCenter(data.results[0].geometry.location);
+                    map.setZoom(15);
+                }
+            });
+        });
+
         // Start from here!
         function main() {
             d3.json(
@@ -78,6 +91,8 @@ function main() {
 
                 d3.selectAll(".cell").attr("fill", "None");
                 d3.select("#cell" + id).attr("fill", "#aaa6");
+                d3.selectAll(".point").attr("r", 2);
+                d3.select("#point" + id).attr("r", 3);
                 update_info(dict2text(ubikes_data[data[id].key]));
             });
 
@@ -114,9 +129,10 @@ function draw_sites(root, coordinates) {
         .enter()
         .append("circle")
         .attr("class", "point")
-        .attr("r", 1.5)
+        .attr("r", 2)
         .attr("fill", site_color)
-        .attr("stroke", "black");
+        .attr("stroke", "black")
+        .attr("id", (d, i) => "point" + i);
 
     updatePoint
         .merge(enterPoint)
