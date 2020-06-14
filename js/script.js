@@ -11,7 +11,7 @@ const boundaries_color = "#dddd";
 const background_color = "#e8e4e1";
 const color_scale = d3
     .scaleThreshold()
-    .domain([0, 5, 10, 20, 30, 40, 60])
+    .domain([0, 5, 10, 20, 35, 55, 80])
     .range(d3.schemeRdBu[7]);
 
 var show_type = null;
