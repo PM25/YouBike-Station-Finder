@@ -16,6 +16,7 @@ const color_scale = d3
 
 var show_type = null;
 var current_marker = { index: null, marker: null };
+var last_update = null;
 
 function main() {
     var map = new google.maps.Map(d3.select("#map").node(), {
@@ -38,6 +39,7 @@ function main() {
         draw_google_map(sites_data);
         update_data();
         setInterval(update_data, 60000);
+        setInterval(update_time, 1000);
         enable_search();
         enable_controls();
 
@@ -48,7 +50,7 @@ function main() {
             ).then(function (data) {
                 if (data.retCode == 1) {
                     ubikes_data = data.retVal;
-                    update_time();
+                    last_update = new Date().getTime();
                 }
             });
         }
@@ -207,9 +209,12 @@ function main() {
     }
 
     function update_time() {
-        var today = new Date();
+        let today = new Date();
         var current_time = today.getHours() + "點 " + today.getMinutes() + "分";
-        d3.select("#info .datetime").html("資料更新時間: " + current_time);
+        let second_diff = Math.floor((today.getTime() - last_update) / 1000);
+        d3.select("#info .datetime").html(
+            "資料更新: " + current_time + "(" + second_diff + " 秒前)"
+        );
     }
 
     function enable_search() {
