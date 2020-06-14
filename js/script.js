@@ -30,6 +30,7 @@ function main() {
     var ubikes_data = null,
         sites_data = null;
 
+    // Start from here!
     Promise.all(files.map((url) => d3.json(url))).then(function (values) {
         d3.select("body").style("background-color", background_color);
         d3.select("#map").style("width", "100vw").style("height", "100vh");
@@ -43,7 +44,6 @@ function main() {
         enable_search();
         enable_controls();
 
-        // Start from here!
         function update_data() {
             d3.json(
                 "https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.json"
@@ -236,29 +236,36 @@ function main() {
         d3.select("#total-btn").on("click", function () {
             show_type = "tot";
             change_voronoi_color();
+            update_btns();
         });
         d3.select("#bike-btn").on("click", function () {
             show_type = "sbi";
             change_voronoi_color();
+            update_btns();
         });
         d3.select("#empty-btn").on("click", function () {
             show_type = "bemp";
             change_voronoi_color();
+            update_btns();
         });
         d3.select("#none-btn").on("click", function () {
             show_type = null;
             change_voronoi_color();
+            update_btns();
         });
+    }
 
-        ["total-btn", "bike-btn", "empty-btn", "none-btn"].forEach((id) => {
-            d3.select("#" + id)
-                .on("mouseover", function () {
-                    d3.select(this).style("background-color", "#aaaa");
-                })
-                .on("mouseout", function () {
-                    d3.select(this).style("background-color", "transparent");
-                });
-        });
+    function update_btns() {
+        d3.selectAll(".btn").style("background-color", "transparent");
+        if (show_type == null) {
+            d3.select("#none-btn").style("background-color", "#aaaa");
+        } else if (show_type == "tot") {
+            d3.select("#total-btn").style("background-color", "#aaaa");
+        } else if (show_type == "sbi") {
+            d3.select("#bike-btn").style("background-color", "#aaaa");
+        } else if (show_type == "bemp") {
+            d3.select("#empty-btn").style("background-color", "#aaaa");
+        }
     }
 
     function index2marker(index, title = "None") {
