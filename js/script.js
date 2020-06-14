@@ -13,7 +13,9 @@ const color_scale = d3
     .scaleThreshold()
     .domain([0, 5, 10, 20, 30, 40, 60])
     .range(d3.schemeRdBu[7]);
-var show_type = "none";
+
+var show_type = null;
+var current_marker = { index: null, marker: null };
 
 function main() {
     var map = new google.maps.Map(d3.select("#map").node(), {
@@ -97,8 +99,7 @@ function main() {
                     voronoi_border_hover_color
                 );
 
-                // index2marker(idx);
-
+                index2marker(idx);
                 update_info(dict2text(index2data(idx)));
             });
 
@@ -166,7 +167,7 @@ function main() {
     function change_voronoi_color(opacity = 0.5) {
         let opacity_hex = Math.floor(opacity * 255).toString(16);
         d3.selectAll(".cell").attr("fill", (d, i) => {
-            if (index2data(i) != null && show_type != "none") {
+            if (index2data(i) != null && show_type != null) {
                 return color_scale(index2data(i)[show_type]) + opacity_hex;
             } else {
                 return "None";
@@ -240,7 +241,7 @@ function main() {
             change_voronoi_color();
         });
         d3.select("#none-btn").on("click", function () {
-            show_type = "none";
+            show_type = null;
             change_voronoi_color();
         });
 
@@ -255,18 +256,24 @@ function main() {
         });
     }
 
-    // function index2marker(index, title = "None") {
-    //     let data = index2data(index);
+    function index2marker(index, title = "None") {
+        if (index != current_marker.index) {
+            current_marker.index = index;
+            let data = index2data(current_marker.index);
 
-    //     new google.maps.Marker({
-    //         position: {
-    //             lat: parseFloat(data.lat),
-    //             lng: parseFloat(data.lng),
-    //         },
-    //         map: map,
-    //         title: title,
-    //     });
-    // }
+            if (current_marker.marker != null) {
+                current_marker.marker.setMap(null);
+            }
+            current_marker.marker = new google.maps.Marker({
+                position: {
+                    lat: parseFloat(data.lat),
+                    lng: parseFloat(data.lng),
+                },
+                map: map,
+                title: title,
+            });
+        }
+    }
 
     function index2id(index) {
         if (sites_data != null) {
