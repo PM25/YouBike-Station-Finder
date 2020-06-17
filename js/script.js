@@ -11,11 +11,12 @@ const boundaries_color = "#dddd";
 const background_color = "#e8e4e1";
 const color_scale = d3
     .scaleThreshold()
-    .domain([0, 5, 10, 20, 35, 55, 80])
+    .domain([1, 5, 10, 20, 35, 55, 80])
     .range(d3.schemeRdBu[7]);
 
 var show_type = null;
 var current_marker = { index: null, marker: null };
+var search_marker = null;
 var last_update = null;
 
 function main() {
@@ -43,6 +44,7 @@ function main() {
         setInterval(update_time, 1000);
         enable_search();
         enable_controls();
+        add_legend(d3.select("#legend"));
 
         function update_data() {
             d3.json(
@@ -50,7 +52,7 @@ function main() {
             ).then(function (data) {
                 if (data.retCode == 1) {
                     ubikes_data = data.retVal;
-                    last_update = new Date().getTime();
+                    last_update = new Date();
                 }
             });
         }
@@ -209,11 +211,13 @@ function main() {
     }
 
     function update_time() {
-        let today = new Date();
-        var current_time = today.getHours() + "點 " + today.getMinutes() + "分";
-        let second_diff = Math.floor((today.getTime() - last_update) / 1000);
+        var last_update_time =
+            last_update.getHours() + "點 " + last_update.getMinutes() + "分";
+        let second_diff = Math.floor(
+            (new Date().getTime() - last_update.getTime()) / 1000
+        );
         d3.select("#info .datetime").html(
-            "資料更新: " + current_time + "(" + second_diff + " 秒前)"
+            "資料更新: " + last_update_time + "(" + second_diff + " 秒前)"
         );
     }
 
@@ -227,6 +231,7 @@ function main() {
                 if (data.status == "OK") {
                     map.setCenter(data.results[0].geometry.location);
                     map.setZoom(15);
+                    draw_marker(data.results[0].geometry.location);
                 }
             });
         });
@@ -268,7 +273,7 @@ function main() {
         }
     }
 
-    function index2marker(index, title = "None") {
+    function index2marker(index, title = "YouBike 站點") {
         if (index != current_marker.index) {
             current_marker.index = index;
             let data = index2data(current_marker.index);
@@ -287,6 +292,21 @@ function main() {
         }
     }
 
+    function draw_marker(data, title = "Search Result") {
+        if (search_marker != null) {
+            search_marker.setMap(null);
+        }
+        search_marker = new google.maps.Marker({
+            position: {
+                lat: parseFloat(data.lat),
+                lng: parseFloat(data.lng),
+            },
+            map: map,
+            title: title,
+            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+        });
+    }
+
     function index2id(index) {
         if (sites_data != null) {
             return sites_data[index].key;
@@ -301,5 +321,33 @@ function main() {
         } else {
             return null;
         }
+    }
+
+    function add_legend(root) {
+        const width = root.node().clientWidth;
+        const length = color_scale.range().length;
+
+        const x = d3
+            .scaleLinear()
+            .domain([1, length - 1])
+            .rangeRound([width / length, (width * (length - 1)) / length]);
+
+        root.selectAll("rect")
+            .data(color_scale.range())
+            .join("rect")
+            .attr("height", 8)
+            .attr("x", (d, i) => x(i))
+            .attr("width", (d, i) => x(i + 1) - x(i))
+            .attr("fill", (d) => d);
+
+        root.call(
+            d3
+                .axisBottom(x)
+                .tickSize(5)
+                .tickFormat((i) => color_scale.domain()[i - 1])
+                .tickValues(d3.range(1, length))
+        )
+            .select(".domain")
+            .remove();
     }
 }

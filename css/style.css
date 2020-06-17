@@ -29,13 +29,20 @@ body {
     top: 0;
     max-width: 30vw;
     min-width: 20vw;
-    height: 50vh;
+    min-height: 35vh;
     border-radius: 0.5em;
     margin: 1em;
     padding: 0.8em;
 
-    color: #222;
-    background-color: #dddd;
+    color: #333;
+    background-color: #eeea;
+}
+
+#info > #legend {
+    max-width: 30vw;
+    min-width: 20vw;
+    height: 1.5em;
+    margin: 0;
 }
 
 #info > .title {
@@ -44,7 +51,7 @@ body {
 }
 
 #info > .datetime {
-    margin: 0.5em 0;
+    margin: 0.3em 0;
 }
 
 .svgoverlay {
