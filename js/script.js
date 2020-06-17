@@ -27,7 +27,9 @@ function main() {
     });
 
     // External Files
-    var files = ["data/taipei_ubike_sites.json"];
+    var files = [
+        "https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.json",
+    ];
     var ubikes_data = null,
         sites_data = null;
 
@@ -36,15 +38,18 @@ function main() {
         d3.select("body").style("background-color", background_color);
         d3.select("#map").style("width", "100vw").style("height", "100vh");
 
-        sites_data = values[0];
+        if (values[0].retCode == 1) {
+            ubikes_data = values[0].retVal;
+            sites_data = get_sitesdata(ubikes_data);
+            last_update = new Date();
 
-        draw_google_map(sites_data);
-        update_data();
-        setInterval(update_data, 60000);
-        setInterval(update_time, 1000);
-        enable_search();
-        enable_controls();
-        add_legend(d3.select("#legend"));
+            setInterval(update_data, 60000);
+            setInterval(update_time, 1000);
+            draw_google_map(sites_data);
+            enable_search();
+            enable_controls();
+            add_legend(d3.select("#legend"));
+        }
 
         function update_data() {
             d3.json(
@@ -57,6 +62,18 @@ function main() {
             });
         }
     });
+
+    function get_sitesdata(ubikes_data) {
+        let sites_data = [];
+        d3.entries(ubikes_data).forEach((data) => {
+            sites_data.push({
+                key: data.key,
+                coordinate: [data.value.lng, data.value.lat],
+            });
+        });
+
+        return sites_data;
+    }
 
     function draw_google_map(data) {
         var overlay = new google.maps.OverlayView();
