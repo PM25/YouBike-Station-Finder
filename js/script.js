@@ -249,6 +249,9 @@ function main() {
                     map.setCenter(data.results[0].geometry.location);
                     map.setZoom(15);
                     draw_marker(data.results[0].geometry.location);
+                } else {
+                    console.log("*Failed searching location.")
+                    console.log(data);
                 }
             });
         });
