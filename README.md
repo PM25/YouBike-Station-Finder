@@ -4,4 +4,4 @@ This is a website that helps users to find the optimal YouBike station closest t
 
 ### Preview
 
-![Snapshot](img/snapshot.jpg)
+![Snapshot](img/snapshot.webp)
