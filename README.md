@@ -1,6 +1,9 @@
 # Data Visualization - YouBike
 
-This is a website that helps users to find the optimal YouBike station closest to the user with sufficient bicycles to borrow or sufficient slots to return the bicycle.
+An interactive website that visualizes information about YouBike in Taipei, Taiwan (e.g. bicycle availability, number of available slots, closest station, etc). With this tool, users can find the closest YouBike station with sufficient bicycles for borrowing or return slots for returning bicycles.
+
+### Language
+Currently, only Mandarin is supported.
 
 ### Preview
 
